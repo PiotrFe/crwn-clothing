@@ -10,7 +10,7 @@ const config = {
   storageBucket: "crwn-db-7d2f3.appspot.com",
   messagingSenderId: "920744208488",
   appId: "1:920744208488:web:6c8d9ad30ec455a36bf3dd",
-  measurementId: "G-RRDKW1T79W"
+  measurementId: "G-RRDKW1T79W",
 };
 
 export const createUserProfileDocument = async (userAuth, additionalData) => {
@@ -29,14 +29,47 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
         displayName,
         email,
         createdAt,
-        ...additionalData
-      })
+        ...additionalData,
+      });
     } catch (error) {
       console.log("error creating user", error.message);
     }
   }
 
   return userRef;
+};
+
+export const addCollectionAndDocuments = async (
+  collectionKey,
+  objectsToAdd
+) => {
+  const collectionRef = firestore.collection(collectionKey);
+
+  const batch = firestore.batch();
+  objectsToAdd.forEach((obj) => {
+    const newDocRef = collectionRef.doc();
+    batch.set(newDocRef, obj);
+  });
+
+  return await batch.commit();
+};
+
+export const covertCollectionsSnapshotToMap = (collections) => {
+  const transformedCollection = collections.docs.map((doc) => {
+    const { title, items } = doc.data();
+
+    return {
+      routeName: encodeURI(title.toLowerCase()),
+      id: doc.id,
+      title,
+      items,
+    };
+  });
+
+  return transformedCollection.reduce((accumulator, collection) => {
+    accumulator[collection.title.toLowerCase()] = collection;
+    return accumulator;
+  }, {});
 };
 
 firebase.initializeApp(config);
